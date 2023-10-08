@@ -1,0 +1,18 @@
+{
+  "name": "@instant.dev/encrypt",
+  "version": "0.0.1",
+  "description": "Simple encrypton and decryption tools",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./test/runner.js"
+  },
+  "keywords": [
+    "encrypt"
+  ],
+  "author": "Keith Horwood",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0"
+  }
+}
