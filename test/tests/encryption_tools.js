@@ -26,7 +26,7 @@ module.exports = () => {
 
     it('Should encrypt an env file properly', async () => {
 
-      const encryptResult = etClient.encryptEnvFileFromPathname('.env.test');
+      const encryptResult = etClient.encryptEnvFileFromPathname('test/dotenv.test');
 
       expect(encryptResult.file).to.exist;
       expect(encryptResult.json).to.exist;

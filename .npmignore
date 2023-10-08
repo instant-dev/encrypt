@@ -7,3 +7,4 @@ package-lock.json
 .deployconfig.*
 test/
 .travis.yml
+dotenv.test
