@@ -57,8 +57,8 @@ module.exports = () => {
       expect(env['MY_VAR']).to.equal('104');
       expect(env['MY_OTHER_VAR']).to.exist;
       expect(env['MY_OTHER_VAR']).to.equal('hello world');
-      expect(env['MY_$LAST$_VAR']).to.exist;
-      expect(env['MY_$LAST$_VAR']).to.equal('hello@%20frenz');
+      expect(env['MY_LAST_VAR']).to.exist;
+      expect(env['MY_LAST_VAR']).to.equal('hello@%20frenz');
 
     });
 

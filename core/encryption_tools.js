@@ -15,9 +15,11 @@ class EncryptionTools {
 
   encrypt (data) {
     const cipher = crypto.createCipheriv(this.method, this.secret, this.iv)
-    return Buffer.from(
-      cipher.update(data, 'utf8', 'hex') + cipher.final('hex')
-    ).toString('base64').replaceAll('=', '$');
+    return Buffer.from(cipher.update(data, 'utf8', 'hex') + cipher.final('hex'))
+      .toString('base64')
+      .replaceAll('=', '_0')
+      .replaceAll('+', '_1')
+      .replaceAll('/', '_2');
   }
 
   encryptEnvFileFromPathname (pathname) {
@@ -75,7 +77,13 @@ class EncryptionTools {
     secret = secret || this.secret;
     iv = iv || this.iv;
     method = method || this.method;
-    const buffer = Buffer.from(encryptedData.replaceAll('$', '='), 'base64')
+    const buffer = Buffer.from(
+      encryptedData
+        .replaceAll('_2', '/')
+        .replaceAll('_1', '+')
+        .replaceAll('_0', '='),
+      'base64'
+    )
     const decipher = crypto.createDecipheriv(method, secret, iv)
     return (
       decipher.update(buffer.toString('utf8'), 'hex', 'utf8') +

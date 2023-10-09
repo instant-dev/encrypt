@@ -22,9 +22,9 @@ is **only** meant to prevent those with filesystem access from reading your secr
 We create an alternate `.env` file that looks like this;
 
 ```
-__ENC_MTRiMjliNzc3MWQxZDAyMWI5YTRiNTdhNjk5OWMwN2E$=ZWMzOTMwY2U5YWEyNTkwODJhOTY4ZjhkMTM3YzBhNmQ$
-__ENC_ZjAwYzliM2RhZGVhMjdkZWJiNzYyODcxNjhmMzQ2MjI$=YjE1OTVmYTgxMWRiZjgzOGRiNGNjNjMwODM5YzFjN2Y$
-__ENC_NWViMzg3NzhhZWNmN2RmNzg4M2UzY2Y4ZGZiNTNmMzc$=OGZiM2IwZDY0YmUyOTE3MzM3NGEwN2NiOWZlNjI4M2U$
+__ENC_NzZjZGU0MjQxYmRlNTFiMjAxYjcwYmNhOThlNjhlNGU_0=MWU0MGQxODYwOTA0ZWI5Yjk0ZjU0OTI0Y2ZkZjQ0YWE_0
+__ENC_MzRkY2ZlZWQxNDU3NGNmMGVmOTMxZDRiNTUzNTE3ZDU_0=Y2M0MGM0OGQ3MjNhYTE1YTgzMzIxZmFjZDc3MGM5Mjk_0
+__ENC_OTI5NzA5NDNjMzM1M2NkZGNiOTk3MmI5Mjc5MmE4NzU_0=MDExZDU5Mjk4ZjZjOTQwNDYxODdmMTI3ZmE3NTU3N2E_0
 ```
 
 These variables should then be loaded into `process.env` either using `dotenv` or the
