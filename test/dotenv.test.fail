@@ -1,5 +1,4 @@
 __ENV_ENCRYPTION_SECRET=hawaiian
-__ENV_ENCRYPTION_IV=sunset
 MY_VAR=104
 MY_OTHER_VAR=hello world
 MY_LAST_VAR=hello@%20frenz

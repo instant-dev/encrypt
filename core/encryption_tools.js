@@ -7,14 +7,25 @@ const crypto = require('crypto');
  */
 class EncryptionTools {
 
-  constructor () {
+  constructor (secret, iv) {
+    this.secret = this.secretToHex(secret || crypto.randomBytes(64).toString());
+    this.iv = this.ivToHex(iv || crypto.randomBytes(64).toString());
     this.method = 'aes-256-cbc';
-    this.secret = crypto.randomBytes(64).toString('hex').slice(0, 32);
-    this.iv = crypto.randomBytes(64).toString('hex').slice(0, 16);
   }
 
-  encrypt (data) {
-    const cipher = crypto.createCipheriv(this.method, this.secret, this.iv)
+  secretToHex (secret) {
+    return crypto.createHash('sha512').update(secret).digest('hex').slice(0, 32)
+  }
+
+  ivToHex (iv) {
+    return crypto.createHash('sha512').update(iv).digest('hex').slice(0, 16)
+  }
+
+  encrypt (data, secret = null, iv = null, method = null) {
+    secret = secret || this.secret;
+    iv = iv || this.iv;
+    method = method || this.method;
+    const cipher = crypto.createCipheriv(method, secret, iv);
     return Buffer.from(cipher.update(data, 'utf8', 'hex') + cipher.final('hex'))
       .toString('base64')
       .replaceAll('=', '_0')
@@ -40,6 +51,9 @@ class EncryptionTools {
     if (!Buffer.isBuffer(file)) {
       throw new Error(`encryptEnvFile: file must be a buffer`);
     }
+    let secret = null;
+    let iv = null;
+    let method = this.method;
     const foundKeys = {};
     const entries = file.toString()
       .split('\n')
@@ -48,17 +62,34 @@ class EncryptionTools {
       .map(line => {
         let key = line.split('=')[0];
         let value = line.split('=').slice(1).join('=');
-        if (foundKeys[key]) {
+        if (key === '__ENV_ENCRYPTION_SECRET') {
+          secret = this.secretToHex(value);
+          return null;
+        } else if (key === '__ENV_ENCRYPTION_IV') {
+          iv = this.ivToHex(value);
+          return null;
+        } else if (key === '__ENV_ENCRYPTION_METHOD') {
+          method = value;
+          return null;
+        } else if (foundKeys[key]) {
           throw new Error(`Duplicate variable found "${key}", please remove one entry and try again`);
+        } else {
+          foundKeys[key] = true;
+          return {key, value};
         }
-        foundKeys[key] = true;
-        return {key, value};
-      });
+      })
+      .filter(v => !!v);
+    if (!secret && !iv) {
+      secret = this.secret;
+      iv = this.iv;
+    } else if ((!secret && iv) || (secret && !iv)) {
+      throw new Error(`Must provide both "__ENV_ENCRYPTION_SECRET" and "__ENV_ENCRYPTION_IV" in the env file to encrypt`);
+    }
     const json = {};
     const encLines = entries
       .map(entry => {
-        const key = `__ENC_${this.encrypt(entry.key)}`;
-        const value = this.encrypt(entry.value);
+        const key = `__ENC_${this.encrypt(entry.key, secret, iv, method)}`;
+        const value = this.encrypt(entry.value, secret, iv, method);
         json[key] = value;
         return `${key}=${value}`;
       });
@@ -66,9 +97,9 @@ class EncryptionTools {
       file: Buffer.from(encLines.join('\n')),
       json: json,
       env: {
-        __ENV_ENCRYPTION_SECRET: this.secret,
-        __ENV_ENCRYPTION_IV: this.iv,
-        __ENV_ENCRYPTION_METHOD: this.method
+        __ENV_ENCRYPTION_SECRET: secret,
+        __ENV_ENCRYPTION_IV: iv,
+        __ENV_ENCRYPTION_METHOD: method
       }
     };
   }
@@ -101,12 +132,10 @@ class EncryptionTools {
           throw new Error(`Missing process.env["__ENV_ENCRYPTION_SECRET"]`);
         } else if (!processEnv.__ENV_ENCRYPTION_IV) {
           throw new Error(`Missing process.env["__ENV_ENCRYPTION_IV"]`);
-        } else if (!processEnv.__ENV_ENCRYPTION_METHOD) {
-          throw new Error(`Missing process.env["__ENV_ENCRYPTION_METHOD"]`);
         }
         const secret = processEnv.__ENV_ENCRYPTION_SECRET;
         const iv = processEnv.__ENV_ENCRYPTION_IV;
-        const method = processEnv.__ENV_ENCRYPTION_METHOD;
+        const method = processEnv.__ENV_ENCRYPTION_METHOD || this.method;
         try {
           const keyName = this.decrypt(encKeyName, secret, iv, method);
           const keyValue = this.decrypt(encKeyValue, secret, iv, method);
