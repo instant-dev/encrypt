@@ -52,7 +52,7 @@ module.exports = () => {
 
       expect(env).to.exist;
       expect(env).to.equal(decryptEnv);
-      expect(Object.keys(env).length).to.equal(3);
+      expect(Object.keys(env).length).to.equal(6);
       expect(env['MY_VAR']).to.exist;
       expect(env['MY_VAR']).to.equal('104');
       expect(env['MY_OTHER_VAR']).to.exist;

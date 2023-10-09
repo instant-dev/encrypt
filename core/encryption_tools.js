@@ -117,9 +117,6 @@ class EncryptionTools {
         }
       }
     }
-    delete processEnv.__ENV_ENCRYPTION_SECRET;
-    delete processEnv.__ENV_ENCRYPTION_IV;
-    delete processEnv.__ENV_ENCRYPTION_METHOD;
     return processEnv;
   }
 
