@@ -103,6 +103,53 @@ module.exports = () => {
 
     });
 
+    it ('Should encrypt env var in a package of files', async () => {
+
+      const environment = `staging`;
+      const files = {
+        'index.mjs': Buffer.from(`console.log('hi!');`),
+        '.env': Buffer.from([`VAR_1=abc`, `VAR_2=xyz`].join('\n')),
+        '.env.staging': Buffer.from([`VAR_1=panic`, `VAR_2=at the`, `VAR_3=disco`].join('\n')),
+        '.env.production': Buffer.from([`VAR_1=owl`, `VAR_2=city`, `VAR_3=carly rae`, `VAR_4=jepsen`].join('\n'))
+      };
+
+      const packageResult = etServer.encryptEnvFileFromPackage(files, `.env.${environment}`, `.env`, /^\.env\..*$/);
+
+      expect(packageResult.env.__ENV_ENCRYPTION_SECRET).to.equal(etServer.secret);
+      expect(packageResult.env.__ENV_ENCRYPTION_IV).to.equal(etServer.iv);
+      expect(packageResult.env.__ENV_ENCRYPTION_METHOD).to.equal(etServer.method);
+      expect(Object.keys(packageResult.json).length).to.equal(3);
+      expect(files).to.equal(packageResult.files);
+      expect(Object.keys(files).length).to.equal(2);
+      expect(files[`index.mjs`]).to.exist;
+      expect(files[`.env`]).to.exist;
+      expect(files[`.env`]).to.equal(packageResult.file);
+
+    });
+
+    it ('Should not encrypt env var in a package of files if it is not found', async () => {
+
+      const environment = `preview`;
+      const files = {
+        'index.mjs': Buffer.from(`console.log('hi!');`),
+        '.env': Buffer.from([`VAR_1=abc`, `VAR_2=xyz`].join('\n')),
+        '.env.staging': Buffer.from([`VAR_1=panic`, `VAR_2=at the`, `VAR_3=disco`].join('\n')),
+        '.env.production': Buffer.from([`VAR_1=owl`, `VAR_2=city`, `VAR_3=carly rae`, `VAR_4=jepsen`].join('\n'))
+      };
+
+      const packageResult = etServer.encryptEnvFileFromPackage(files, `.env.${environment}`, `.env`, /^\.env\..*$/);
+
+      expect(Object.keys(packageResult.env).length).to.equal(0);
+      expect(Object.keys(packageResult.json).length).to.equal(0);
+      expect(files).to.equal(packageResult.files);
+      expect(Object.keys(files).length).to.equal(2);
+      expect(files[`index.mjs`]).to.exist;
+      expect(files[`.env`]).to.exist;
+      expect(files[`.env`]).to.equal(packageResult.file);
+      expect(files[`.env`].toString()).to.equal('');
+
+    });
+
   });
 
 };

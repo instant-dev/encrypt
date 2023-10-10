@@ -47,6 +47,52 @@ class EncryptionTools {
     return this.encryptEnvFile(file);
   }
 
+  encryptEnvFileFromPackage (files, fromPathname = '.env', toPathname = '.env', deleteRegExp = null) {
+    let file = null;
+    let json = {};
+    let env = {};
+    if (typeof fromPathname !== 'string') {
+      throw new Error(`fromPathname must be a string`);
+    }
+    fromPathname = fromPathname.replaceAll('~', os.homedir());
+    if (typeof toPathname !== 'string') {
+      throw new Error(`toPathname must be a string`);
+    }
+    toPathname = toPathname.replaceAll('~', os.homedir());
+    if (!files || typeof files !== 'object') {
+      throw new Error(`files must be object of filename: buffer pairs`);
+    }
+    if (deleteRegExp) {
+      if (!(deleteRegExp instanceof RegExp)) {
+        throw new Error(`deleteRegExp must be a valid Regular Expression`)
+      }
+    }
+    if (files[fromPathname]) {
+      if (!Buffer.isBuffer(files[fromPathname])) {
+        throw new Error(`files["${fromPathname}"] must be a buffer`);
+      }
+      let encryptResponse = this.encryptEnvFile(files[fromPathname]);
+      files[toPathname] = file = encryptResponse.file;
+      json = encryptResponse.json;
+      env = encryptResponse.env;
+    } else {
+      files[toPathname] = file = Buffer.from('');
+    }
+    if (deleteRegExp) {
+      for (const filename in files) {
+        if (filename.match(deleteRegExp)) {
+          delete files[filename];
+        }
+      } 
+    }
+    return {
+      files,
+      file,
+      json,
+      env
+    };
+  }
+
   encryptEnvFile (file) {
     if (!Buffer.isBuffer(file)) {
       throw new Error(`encryptEnvFile: file must be a buffer`);
