@@ -1,6 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
+const { expect } = require('chai');
 
 /**
  * Encrypts and decrypts environment variables prefixed with __ENC_
@@ -47,8 +48,9 @@ class EncryptionTools {
     return this.encryptEnvFile(file);
   }
 
-  encryptEnvFileFromPackage (files, fromPathname = '.env', toPathname = '.env', deleteRegExp = null) {
+  encryptEnvFileFromPackage (files, fromPathname = '.env', toPathname = '.env', deleteRegExp = null, ignoreEnvMismatch = false) {
     let file = null;
+    let expectNodeEnv = null;
     let json = {};
     let env = {};
     if (typeof fromPathname !== 'string') {
@@ -57,6 +59,13 @@ class EncryptionTools {
     fromPathname = fromPathname.replaceAll('~', os.homedir());
     if (typeof toPathname !== 'string') {
       throw new Error(`toPathname must be a string`);
+    }
+    if (
+      fromPathname &&
+      !ignoreEnvMismatch &&
+      fromPathname.match(/(^|\/)\.(.+)\.(.+)$/gi)
+    ) {
+      expectNodeEnv = fromPathname.replace(/^(.*?\/)?\.(.+)\.(.+)$/gi, '$3');
     }
     toPathname = toPathname.replaceAll('~', os.homedir());
     if (!files || typeof files !== 'object') {
@@ -71,7 +80,7 @@ class EncryptionTools {
       if (!Buffer.isBuffer(files[fromPathname])) {
         throw new Error(`files["${fromPathname}"] must be a buffer`);
       }
-      let encryptResponse = this.encryptEnvFile(files[fromPathname]);
+      let encryptResponse = this.encryptEnvFile(files[fromPathname], expectNodeEnv);
       files[toPathname] = file = encryptResponse.file;
       json = encryptResponse.json;
       env = encryptResponse.env;
@@ -93,7 +102,7 @@ class EncryptionTools {
     };
   }
 
-  encryptEnvFile (file) {
+  encryptEnvFile (file, expectNodeEnv = null) {
     if (!Buffer.isBuffer(file)) {
       throw new Error(`encryptEnvFile: file must be a buffer`);
     }
@@ -108,7 +117,9 @@ class EncryptionTools {
       .map(line => {
         let key = line.split('=')[0];
         let value = line.split('=').slice(1).join('=');
-        if (key === '__ENV_ENCRYPTION_SECRET') {
+        if (key === 'NODE_ENV' && expectNodeEnv && expectNodeEnv !== value) {
+          throw new Error(`Expecting "NODE_ENV=${expectNodeEnv}", found "NODE_ENV=${value}"`);
+        } else if (key === '__ENV_ENCRYPTION_SECRET') {
           secret = this.secretToHex(value);
           return null;
         } else if (key === '__ENV_ENCRYPTION_IV') {

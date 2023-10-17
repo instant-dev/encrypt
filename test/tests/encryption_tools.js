@@ -150,6 +150,76 @@ module.exports = () => {
 
     });
 
+    it ('Should succeed if correct NODE_ENV set in .env file', async () => {
+
+      const environment = `preview`;
+      const files = {
+        'index.mjs': Buffer.from(`console.log('hi!');`),
+        '.env': Buffer.from([`VAR_1=abc`, `VAR_2=xyz`].join('\n')),
+        '.env.preview': Buffer.from([`NODE_ENV=preview`, `VAR_1=panic`, `VAR_2=at the`, `VAR_3=disco`].join('\n')),
+        '.env.production': Buffer.from([`VAR_1=owl`, `VAR_2=city`, `VAR_3=carly rae`, `VAR_4=jepsen`].join('\n'))
+      };
+
+      const packageResult = etServer.encryptEnvFileFromPackage(files, `.env.${environment}`, `.env`, /^\.env\..*$/);
+
+      expect(packageResult.env.__ENV_ENCRYPTION_SECRET).to.equal(etServer.secret);
+      expect(packageResult.env.__ENV_ENCRYPTION_IV).to.equal(etServer.iv);
+      expect(packageResult.env.__ENV_ENCRYPTION_METHOD).to.equal(etServer.method);
+      expect(Object.keys(packageResult.json).length).to.equal(4);
+      expect(files).to.equal(packageResult.files);
+      expect(Object.keys(files).length).to.equal(2);
+      expect(files[`index.mjs`]).to.exist;
+      expect(files[`.env`]).to.exist;
+      expect(files[`.env`]).to.equal(packageResult.file);
+
+    });
+
+    it ('Should fail if incorrect NODE_ENV set in .env file', async () => {
+
+      const environment = `preview`;
+      const files = {
+        'index.mjs': Buffer.from(`console.log('hi!');`),
+        '.env': Buffer.from([`VAR_1=abc`, `VAR_2=xyz`].join('\n')),
+        '.env.preview': Buffer.from([`NODE_ENV=staging`, `VAR_1=panic`, `VAR_2=at the`, `VAR_3=disco`].join('\n')),
+        '.env.production': Buffer.from([`VAR_1=owl`, `VAR_2=city`, `VAR_3=carly rae`, `VAR_4=jepsen`].join('\n'))
+      };
+  
+      let error;
+
+      try {
+        const packageResult = etServer.encryptEnvFileFromPackage(files, `.env.${environment}`, `.env`, /^\.env\..*$/);
+      } catch (e) {
+        error = e;
+      }
+      
+      expect(error).to.exist;
+      expect(error.message).to.contain(`Expecting "NODE_ENV=${environment}", found "NODE_ENV=staging"`);
+
+    });
+
+    it ('Should succeed if incorrect NODE_ENV set in .env file, but ignored', async () => {
+
+      const environment = `preview`;
+      const files = {
+        'index.mjs': Buffer.from(`console.log('hi!');`),
+        '.env': Buffer.from([`VAR_1=abc`, `VAR_2=xyz`].join('\n')),
+        '.env.preview': Buffer.from([`NODE_ENV=staging`, `VAR_1=panic`, `VAR_2=at the`, `VAR_3=disco`].join('\n')),
+        '.env.production': Buffer.from([`VAR_1=owl`, `VAR_2=city`, `VAR_3=carly rae`, `VAR_4=jepsen`].join('\n'))
+      };
+
+      const packageResult = etServer.encryptEnvFileFromPackage(files, `.env.${environment}`, `.env`, /^\.env\..*$/, true);
+      
+      expect(packageResult.env.__ENV_ENCRYPTION_SECRET).to.equal(etServer.secret);
+      expect(packageResult.env.__ENV_ENCRYPTION_IV).to.equal(etServer.iv);
+      expect(packageResult.env.__ENV_ENCRYPTION_METHOD).to.equal(etServer.method);
+      expect(Object.keys(packageResult.json).length).to.equal(4);
+      expect(files).to.equal(packageResult.files);
+      expect(Object.keys(files).length).to.equal(2);
+      expect(files[`index.mjs`]).to.exist;
+      expect(files[`.env`]).to.exist;
+      expect(files[`.env`]).to.equal(packageResult.file);
+    });
+
   });
 
 };
