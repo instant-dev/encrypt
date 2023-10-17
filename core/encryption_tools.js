@@ -1,7 +1,6 @@
 const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
-const { expect } = require('chai');
 
 /**
  * Encrypts and decrypts environment variables prefixed with __ENC_

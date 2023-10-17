@@ -1,6 +1,6 @@
 {
   "name": "@instant.dev/encrypt",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Simple encrypton and decryption tools",
   "main": "index.js",
   "scripts": {
